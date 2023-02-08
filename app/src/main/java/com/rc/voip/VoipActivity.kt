@@ -3,12 +3,14 @@ package com.rc.voip
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
+import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -26,6 +28,7 @@ class VoipActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityVoipBinding
     private var myRequest: PermissionRequest? = null
+    private var webView : WebView?=null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,7 +36,7 @@ class VoipActivity : AppCompatActivity() {
         setContentView(binding.root)
         setWebView()
         binding.include.xReload.setOnClickListener {
-            binding.include.webView.loadUrl(URL)
+            webView?.loadUrl(URL)
         }
         binding.include.xBtnOpen.setOnClickListener {
             openInBrowser()
@@ -41,16 +44,19 @@ class VoipActivity : AppCompatActivity() {
     }
 
     private fun setWebView() {
-        binding.include.webView.settings.javaScriptEnabled = true
-        binding.include.webView.settings.javaScriptCanOpenWindowsAutomatically = true
-        binding.include.webView.settings.mediaPlaybackRequiresUserGesture = false;
+        val am = getSystemService(AUDIO_SERVICE) as AudioManager
+        am.isSpeakerphoneOn = true
+        webView = WebView(applicationContext)
+        webView?.settings?.javaScriptEnabled = true
+        webView?.settings?.javaScriptCanOpenWindowsAutomatically = true
+        webView?.settings?.mediaPlaybackRequiresUserGesture = false;
 
-        binding.include.webView.webViewClient = WebViewClient()
-        binding.include.webView.settings.saveFormData = true
-        binding.include.webView.settings.setSupportZoom(false)
-        binding.include.webView.settings.cacheMode = WebSettings.LOAD_NO_CACHE
-        binding.include.webView.settings.pluginState = WebSettings.PluginState.ON
-        binding.include.webView.webChromeClient = object : WebChromeClient() {
+        webView?.webViewClient = WebViewClient()
+        webView?.settings?.saveFormData = true
+        webView?.settings?.setSupportZoom(false)
+        webView?.settings?.cacheMode = WebSettings.LOAD_NO_CACHE
+        webView?.settings?.pluginState = WebSettings.PluginState.ON
+        webView?.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
                 myRequest = request
                 for (permission in request.resources) {
@@ -67,14 +73,14 @@ class VoipActivity : AppCompatActivity() {
             }
         }
 
-        binding.include.webView.loadUrl(URL)
+        webView?.loadUrl(URL)
 
-        //binding.include.webView.loadUrl("https://jc400-audio.web.app?token=af5db706-43d2-405a-9f13-965b86a6f39c")
+        //webView.loadUrl("https://jc400-audio.web.app?token=af5db706-43d2-405a-9f13-965b86a6f39c")
     }
 
     override fun onBackPressed() {
-        if (binding.include.webView.canGoBack()) {
-            binding.include.webView.goBack()
+        if (webView?.canGoBack()==true) {
+            webView?.goBack()
         } else {
             finish()
         }
@@ -97,7 +103,7 @@ class VoipActivity : AppCompatActivity() {
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
                     myRequest?.grant(myRequest?.resources)
-                    binding.include.webView.loadUrl(URL)
+                    webView?.loadUrl(URL)
                 } else {
 
                     // permission denied, boo! Disable the
@@ -142,6 +148,6 @@ class VoipActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        binding.include.webView.destroy()
+        webView?.destroy()
     }
 }
