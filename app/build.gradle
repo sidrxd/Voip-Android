@@ -3,6 +3,10 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+ext {
+    geckoview_channel = "nightly"
+    geckoview_version = "70.0.20190712095934"
+}
 android {
     namespace 'com.rc.voip'
     compileSdk 33
@@ -11,8 +15,8 @@ android {
         applicationId "com.rc.voip"
         minSdk 24
         targetSdk 33
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName "1.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -71,5 +75,6 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
     implementation 'com.github.delight-im:Android-AdvancedWebView:v3.2.1'
     implementation 'com.github.javiersantos:AppUpdater:2.7'
+  //  implementation "org.mozilla.geckoview:geckoview-nightly:70.0.20190712095934"
 
 }

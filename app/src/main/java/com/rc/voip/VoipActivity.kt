@@ -1,6 +1,5 @@
 package com.rc.voip
 
-import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
@@ -13,7 +12,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.ui.AppBarConfiguration
 import com.github.javiersantos.appupdater.AppUpdater
+import com.github.javiersantos.appupdater.AppUpdaterUtils
+import com.github.javiersantos.appupdater.enums.AppUpdaterError
+import com.github.javiersantos.appupdater.enums.Display
 import com.github.javiersantos.appupdater.enums.UpdateFrom
+import com.github.javiersantos.appupdater.objects.Update
 import com.rc.voip.databinding.ActivityVoipBinding
 
 
@@ -32,6 +35,7 @@ class VoipActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityVoipBinding.inflate(layoutInflater)
         setContentView(binding.root)
+      //  setGecko()
         setWebView()
         binding.include.xReload.setOnClickListener {
             webView?.loadUrl(URL)
@@ -42,11 +46,41 @@ class VoipActivity : AppCompatActivity() {
         startAutoUpdate()
     }
 
+//    private fun setGecko() {
+//        val view = binding.include.webView
+//        val session = GeckoSession()
+//        session.contentDelegate = object : GeckoSession.ContentDelegate {}
+//
+//        val runtime = GeckoRuntime.create(this)
+//        runtime.settings.javaScriptEnabled = true
+//        session.open(runtime)
+//        view.setSession(session)
+//        session.loadUri(URL) // Or any other URL...
+//
+//    }
+
+
     private fun startAutoUpdate() {
-        val appUpdater = AppUpdater(this)
+        val listener =object : AppUpdaterUtils.UpdateListener{
+            override fun onSuccess(update: Update?, isUpdateAvailable: Boolean?) {
+                Log.d("Latest Version", update?.getLatestVersion().toString());
+                Log.d("Latest Version Code", update?.getLatestVersionCode().toString());
+                Log.d("Release notes", update?.getReleaseNotes().toString());
+                Log.d("URL", update?.getUrlToDownload().toString());
+            }
+            override fun onFailed(error: AppUpdaterError?) {
+                Log.d("TAG", "onFailed: ")
+            }
+        }
+
+        val appUpdater = AppUpdaterUtils(this)
+            .withListener(listener)
+            .setUpdateFrom(UpdateFrom.GITHUB)
+            .setGitHubUserAndRepo("sidrxd", "Voip-Android")
             .setUpdateFrom(UpdateFrom.JSON)
             .setUpdateJSON("https://raw.githubusercontent.com/sidrxd/Voip-Android/master/app/update_changelog.json")
         appUpdater.start()
+
     }
 
     private fun setWebView() {
@@ -81,7 +115,7 @@ class VoipActivity : AppCompatActivity() {
                         "android.webkit.resource.AUDIO_CAPTURE" -> {
                             askForPermission(
                                 request.origin.toString(),
-                                Manifest.permission.RECORD_AUDIO,
+                                android.Manifest.permission.RECORD_AUDIO,
                                 MY_PERMISSIONS_REQUEST_RECORD_AUDIO
                             )
                         }
