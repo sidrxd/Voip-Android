@@ -6,18 +6,19 @@
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-   <WebView
+   <im.delight.android.webview.AdvancedWebView
        android:id="@+id/web_view"
-       android:layout_width="42dp"
-       android:layout_height="42dp"
+       android:layout_width="match_parent"
+       android:layout_height="match_parent"
        app:layout_constraintStart_toStartOf="parent"
        app:layout_constraintTop_toTopOf="parent" />
 
-   <com.google.android.material.floatingactionbutton.FloatingActionButton
+   <Button
        android:id="@+id/x_reload"
        android:src="@android:drawable/ic_media_play"
        android:layout_margin="16dp"
        android:layout_width="wrap_content"
+       android:text="reload"
        android:layout_height="wrap_content"
        app:layout_constraintBottom_toBottomOf="parent"
        app:layout_constraintEnd_toEndOf="parent" />

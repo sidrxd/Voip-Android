@@ -7,15 +7,13 @@ import android.media.AudioManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.webkit.PermissionRequest
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.ui.AppBarConfiguration
+import com.github.javiersantos.appupdater.AppUpdater
+import com.github.javiersantos.appupdater.enums.UpdateFrom
 import com.rc.voip.databinding.ActivityVoipBinding
 
 
@@ -41,19 +39,38 @@ class VoipActivity : AppCompatActivity() {
         binding.include.xBtnOpen.setOnClickListener {
             openInBrowser()
         }
+        startAutoUpdate()
+    }
+
+    private fun startAutoUpdate() {
+        val appUpdater = AppUpdater(this)
+            .setUpdateFrom(UpdateFrom.JSON)
+            .setUpdateJSON("https://raw.githubusercontent.com/javiersantos/AppUpdater/master/app/update-changelog.json")
+        appUpdater.start()
     }
 
     private fun setWebView() {
         val am = getSystemService(AUDIO_SERVICE) as AudioManager
         am.isSpeakerphoneOn = true
-        webView = WebView(applicationContext)
+        webView = binding.include.webView
+        WebView.setWebContentsDebuggingEnabled(true)
+
         webView?.settings?.javaScriptEnabled = true
+
+        if (webView?.settings?.javaScriptEnabled==true){
+            Log.e("TAG", "setWebView: javascript enabled")
+        }else{
+            Log.e("TAG", "setWebView: javascript false" +
+                    "")
+
+        }
+        webView?.settings?.userAgentString = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
         webView?.settings?.javaScriptCanOpenWindowsAutomatically = true
         webView?.settings?.mediaPlaybackRequiresUserGesture = false;
-
+        webView?.settings?.domStorageEnabled = true
         webView?.webViewClient = WebViewClient()
         webView?.settings?.saveFormData = true
-        webView?.settings?.setSupportZoom(false)
+        webView?.settings?.setSupportZoom(true)
         webView?.settings?.cacheMode = WebSettings.LOAD_NO_CACHE
         webView?.settings?.pluginState = WebSettings.PluginState.ON
         webView?.webChromeClient = object : WebChromeClient() {
@@ -72,6 +89,7 @@ class VoipActivity : AppCompatActivity() {
                 }
             }
         }
+        Log.i("WebViewActivity", "UA: " + webView?.getSettings()?.getUserAgentString());
 
         webView?.loadUrl(URL)
 
