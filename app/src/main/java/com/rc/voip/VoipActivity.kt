@@ -45,7 +45,7 @@ class VoipActivity : AppCompatActivity() {
     private fun startAutoUpdate() {
         val appUpdater = AppUpdater(this)
             .setUpdateFrom(UpdateFrom.JSON)
-            .setUpdateJSON("https://raw.githubusercontent.com/javiersantos/AppUpdater/master/app/update-changelog.json")
+            .setUpdateJSON("https://raw.githubusercontent.com/sidrxd/Voip-Android/master/app/update_changelog.json")
         appUpdater.start()
     }
 
