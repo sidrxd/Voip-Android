@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId "com.rc.voip"
-        minSdk 24
+        minSdk 23
         targetSdk 33
         versionCode 3
         versionName "1.2"
@@ -75,6 +75,7 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
     implementation 'com.github.delight-im:Android-AdvancedWebView:v3.2.1'
     implementation 'com.github.javiersantos:AppUpdater:2.7'
+    implementation("io.github.solrudev:simpleinstaller:4.2.2")
   //  implementation "org.mozilla.geckoview:geckoview-nightly:70.0.20190712095934"
 
 }

@@ -1,23 +1,29 @@
 package com.rc.voip
 
+import android.app.DownloadManager
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.AudioManager
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.webkit.*
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.ui.AppBarConfiguration
-import com.github.javiersantos.appupdater.AppUpdater
 import com.github.javiersantos.appupdater.AppUpdaterUtils
 import com.github.javiersantos.appupdater.enums.AppUpdaterError
-import com.github.javiersantos.appupdater.enums.Display
 import com.github.javiersantos.appupdater.enums.UpdateFrom
 import com.github.javiersantos.appupdater.objects.Update
 import com.rc.voip.databinding.ActivityVoipBinding
+import com.rc.voip.receiver.DownloadReceiver
+import com.rc.voip.receiver.PermissionCheck
+import java.io.File
 
 
 class VoipActivity : AppCompatActivity() {
@@ -29,13 +35,13 @@ class VoipActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityVoipBinding
     private var myRequest: PermissionRequest? = null
-    private var webView : WebView?=null
+    private var webView: WebView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityVoipBinding.inflate(layoutInflater)
         setContentView(binding.root)
-      //  setGecko()
+        //  setGecko()
         setWebView()
         binding.include.xReload.setOnClickListener {
             webView?.loadUrl(URL)
@@ -61,19 +67,43 @@ class VoipActivity : AppCompatActivity() {
 
 
     private fun startAutoUpdate() {
-        val listener =object : AppUpdaterUtils.UpdateListener{
+        val listener = object : AppUpdaterUtils.UpdateListener {
             override fun onSuccess(update: Update?, isUpdateAvailable: Boolean?) {
-                Log.d("Latest Version", update?.getLatestVersion().toString());
-                Log.d("Latest Version Code", update?.getLatestVersionCode().toString());
-                Log.d("Release notes", update?.getReleaseNotes().toString());
-                Log.d("URL", update?.getUrlToDownload().toString());
+                Log.d("Latest Version", update?.latestVersion.toString())
+                Log.d("Latest Version Code", update?.latestVersionCode.toString())
+                Log.d("Release notes", update?.releaseNotes.toString())
+                Toast.makeText(this@VoipActivity, "new update available", Toast.LENGTH_SHORT).show()
+
+
+                val downloadUrl =
+                    update?.urlToDownload.toString() + "/download/1.0.0.0/app-release.apk"
+                val folder = File(
+                    Environment.getExternalStorageDirectory().toString() + "/Download/jcupdate"
+                )
+                Log.d("URL", downloadUrl)
+
+                deleteRecursive(folder)
+                if (PermissionCheck.readAndWriteExternalStorage(this@VoipActivity)){
+                    Utils.startDownload(
+                        downloadUrl,
+                        "jcupdate/",
+                        applicationContext,
+                        "app-release.apk"
+                    )
+                }
+
+
+                // https://github.com/sidrxd/Voip-Android/releases/download/1.0.0.0/app-release.apk
+
             }
+
             override fun onFailed(error: AppUpdaterError?) {
                 Log.d("TAG", "onFailed: ")
             }
         }
 
         val appUpdater = AppUpdaterUtils(this)
+            // .setDisplay(Display.DIALOG)
             .withListener(listener)
             .setUpdateFrom(UpdateFrom.GITHUB)
             .setGitHubUserAndRepo("sidrxd", "Voip-Android")
@@ -81,6 +111,16 @@ class VoipActivity : AppCompatActivity() {
             .setUpdateJSON("https://raw.githubusercontent.com/sidrxd/Voip-Android/master/app/update_changelog.json")
         appUpdater.start()
 
+        registerReceiver(DownloadReceiver(),  IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+
+
+    }
+
+    fun deleteRecursive(fileOrDirectory: File) {
+        if (fileOrDirectory.isDirectory) for (child in fileOrDirectory.listFiles()) deleteRecursive(
+            child
+        )
+        fileOrDirectory.delete()
     }
 
     private fun setWebView() {
@@ -91,14 +131,17 @@ class VoipActivity : AppCompatActivity() {
 
         webView?.settings?.javaScriptEnabled = true
 
-        if (webView?.settings?.javaScriptEnabled==true){
+        if (webView?.settings?.javaScriptEnabled == true) {
             Log.e("TAG", "setWebView: javascript enabled")
-        }else{
-            Log.e("TAG", "setWebView: javascript false" +
-                    "")
+        } else {
+            Log.e(
+                "TAG", "setWebView: javascript false" +
+                        ""
+            )
 
         }
-        webView?.settings?.userAgentString = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+        webView?.settings?.userAgentString =
+            "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
         webView?.settings?.javaScriptCanOpenWindowsAutomatically = true
         webView?.settings?.mediaPlaybackRequiresUserGesture = false;
         webView?.settings?.domStorageEnabled = true
@@ -131,7 +174,7 @@ class VoipActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (webView?.canGoBack()==true) {
+        if (webView?.canGoBack() == true) {
             webView?.goBack()
         } else {
             finish()
