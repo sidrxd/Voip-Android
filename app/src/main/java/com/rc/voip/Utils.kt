@@ -43,7 +43,7 @@ object Utils {
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE or DownloadManager.Request.NETWORK_WIFI) // Tell on which network you want to download file.
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED) // This will show notification on top when downloading the file.
         request.setTitle(FileName + "") // Title for notification.
-        request.setDestinationInExternalPublicDir(
+        request.setDestinationInExternalFilesDir(context,
             Environment.DIRECTORY_DOWNLOADS,
             destinationPath + FileName
         )

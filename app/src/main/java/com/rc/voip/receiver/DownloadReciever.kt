@@ -5,14 +5,15 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Environment
-import android.provider.SyncStateContract
 import android.util.Log
+import androidx.core.content.ContextCompat.startActivity
 import com.rc.voip.Constants
-import com.rc.voip.InstallerActivity
 import io.github.solrudev.simpleinstaller.apksource.UriApkSource
 import io.github.solrudev.simpleinstaller.data.ConfirmationStrategy
 import io.github.solrudev.simpleinstaller.data.SessionOptions
 import java.io.File
+import kotlin.math.log
+
 
 class DownloadReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
@@ -23,19 +24,33 @@ class DownloadReceiver : BroadcastReceiver() {
 //            context.startActivity(installerActivity)
 
             val folder =
-                File(Environment.getExternalStorageDirectory().toString() + "/Download/jcupdate")
+                File(context.getExternalFilesDir("").toString() + "/Download/jcupdate")
+            Log.d("TAG", "onReceive: downloaded folder =$folder")
             if (!folder.exists()) folder.mkdir()
             if (folder.exists()) {
                 val files = folder.listFiles()
                 if (files != null) {
                     // install(files[0])
-                    installFromStorage(files[0])
+                    //installFromStorage(files[0])
+                    install(files[0],context)
+                    Log.d("TAG", "onReceive: installation started")
 //                installCoroutine(Uri.fromFile(
 //                    files[0]
 //                ))
                 }
             }
         }
+    }
+
+    private fun install(file: File?,context: Context){
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.setDataAndType(
+            Uri.fromFile(
+                file
+            ), "application/vnd.android.package-archive"
+        )
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(intent)
     }
 
     private fun installFromStorage(file: File) {

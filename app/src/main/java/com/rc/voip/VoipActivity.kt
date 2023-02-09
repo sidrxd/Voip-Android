@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.AudioManager
-import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -23,6 +22,10 @@ import com.github.javiersantos.appupdater.objects.Update
 import com.rc.voip.databinding.ActivityVoipBinding
 import com.rc.voip.receiver.DownloadReceiver
 import com.rc.voip.receiver.PermissionCheck
+import org.mozilla.geckoview.GeckoRuntime
+import org.mozilla.geckoview.GeckoSession
+import org.mozilla.geckoview.GeckoSession.MediaDelegate
+import org.mozilla.geckoview.GeckoSession.PermissionDelegate
 import java.io.File
 
 
@@ -36,15 +39,15 @@ class VoipActivity : AppCompatActivity() {
     private lateinit var binding: ActivityVoipBinding
     private var myRequest: PermissionRequest? = null
     private var webView: WebView? = null
+    private var session: GeckoSession? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityVoipBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        //  setGecko()
-        setWebView()
+        setGecko()
         binding.include.xReload.setOnClickListener {
-            webView?.loadUrl(URL)
+            session?.loadUri(URL)
         }
         binding.include.xBtnOpen.setOnClickListener {
             openInBrowser()
@@ -52,18 +55,33 @@ class VoipActivity : AppCompatActivity() {
         startAutoUpdate()
     }
 
-//    private fun setGecko() {
-//        val view = binding.include.webView
-//        val session = GeckoSession()
-//        session.contentDelegate = object : GeckoSession.ContentDelegate {}
-//
-//        val runtime = GeckoRuntime.create(this)
-//        runtime.settings.javaScriptEnabled = true
-//        session.open(runtime)
-//        view.setSession(session)
-//        session.loadUri(URL) // Or any other URL...
-//
-//    }
+    private fun setGecko() {
+        val permission = ExamplePermissionDelegate(this)
+
+        val am = getSystemService(AUDIO_SERVICE) as AudioManager
+        am.isSpeakerphoneOn = true
+        val view = binding.include.webView
+        session = GeckoSession()
+
+        val mWebSetting = GeckoRuntime.getDefault(this)
+        mWebSetting.settings.javaScriptEnabled = true
+
+        session?.permissionDelegate = object : PermissionDelegate {
+            override fun onAndroidPermissionsRequest(
+                session: GeckoSession,
+                permissions: Array<out String>?,
+                callback: PermissionDelegate.Callback
+            ) {
+                super.onAndroidPermissionsRequest(session, permissions, callback)
+
+            }
+        }
+
+        session?.permissionDelegate = permission
+        session?.open(mWebSetting)
+        view.setSession(session!!)
+        session?.loadUri(URL)
+    }
 
 
     private fun startAutoUpdate() {
@@ -78,19 +96,20 @@ class VoipActivity : AppCompatActivity() {
                 val downloadUrl =
                     update?.urlToDownload.toString() + "/download/1.0.0.0/app-release.apk"
                 val folder = File(
-                    Environment.getExternalStorageDirectory().toString() + "/Download/jcupdate"
+                    getExternalFilesDir("").toString() + "/Download/jcupdate"
                 )
                 Log.d("URL", downloadUrl)
 
                 deleteRecursive(folder)
-                if (PermissionCheck.readAndWriteExternalStorage(this@VoipActivity)){
-                    Utils.startDownload(
-                        downloadUrl,
-                        "jcupdate/",
-                        applicationContext,
-                        "app-release.apk"
-                    )
+                if (PermissionCheck.readAndWriteExternalStorage(this@VoipActivity)) {
+
                 }
+                Utils.startDownload(
+                    downloadUrl,
+                    "jcupdate/",
+                    applicationContext,
+                    "app-release.apk"
+                )
 
 
                 // https://github.com/sidrxd/Voip-Android/releases/download/1.0.0.0/app-release.apk
@@ -111,7 +130,10 @@ class VoipActivity : AppCompatActivity() {
             .setUpdateJSON("https://raw.githubusercontent.com/sidrxd/Voip-Android/master/app/update_changelog.json")
         appUpdater.start()
 
-        registerReceiver(DownloadReceiver(),  IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        registerReceiver(
+            DownloadReceiver(),
+            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        );
 
 
     }
@@ -126,7 +148,7 @@ class VoipActivity : AppCompatActivity() {
     private fun setWebView() {
         val am = getSystemService(AUDIO_SERVICE) as AudioManager
         am.isSpeakerphoneOn = true
-        webView = binding.include.webView
+        webView = WebView(this)
         WebView.setWebContentsDebuggingEnabled(true)
 
         webView?.settings?.javaScriptEnabled = true
