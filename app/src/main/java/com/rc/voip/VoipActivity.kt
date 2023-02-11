@@ -1,16 +1,20 @@
 package com.rc.voip
 
 import android.app.DownloadManager
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.telephony.TelephonyManager
 import android.util.Log
 import android.webkit.*
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -32,8 +36,9 @@ import java.io.File
 class VoipActivity : AppCompatActivity() {
     companion object {
         const val MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1
-        const val URL = "https://jc400-audio.web.app/?token=af5db706-43d2-405a-9f13-965b86a6f39c"
+       // const val URL = "https://jc400-audio.web.app/?token=af5db706-43d2-405a-9f13-965b86a6f39c"
     }
+    private var url :String ?=null
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityVoipBinding
@@ -41,13 +46,16 @@ class VoipActivity : AppCompatActivity() {
     private var webView: WebView? = null
     private var session: GeckoSession? = null
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityVoipBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        url = "https://jc400-audio.web.app/?id=${telephonyManager.imei}"
         setGecko()
         binding.include.xReload.setOnClickListener {
-            session?.loadUri(URL)
+            session?.loadUri(url.toString())
         }
         binding.include.xBtnOpen.setOnClickListener {
             openInBrowser()
@@ -80,7 +88,7 @@ class VoipActivity : AppCompatActivity() {
         session?.permissionDelegate = permission
         session?.open(mWebSetting)
         view.setSession(session!!)
-        session?.loadUri(URL)
+        session?.loadUri(url.toString())
     }
 
 
@@ -190,7 +198,7 @@ class VoipActivity : AppCompatActivity() {
         }
         Log.i("WebViewActivity", "UA: " + webView?.getSettings()?.getUserAgentString());
 
-        webView?.loadUrl(URL)
+        webView?.loadUrl(url.toString())
 
         //webView.loadUrl("https://jc400-audio.web.app?token=af5db706-43d2-405a-9f13-965b86a6f39c")
     }
@@ -220,7 +228,7 @@ class VoipActivity : AppCompatActivity() {
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
                     myRequest?.grant(myRequest?.resources)
-                    webView?.loadUrl(URL)
+                    webView?.loadUrl(url.toString())
                 } else {
 
                     // permission denied, boo! Disable the
@@ -259,7 +267,7 @@ class VoipActivity : AppCompatActivity() {
 
 
     private fun openInBrowser() {
-        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(URL))
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url.toString()))
         startActivity(browserIntent)
     }
 
