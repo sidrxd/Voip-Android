@@ -8,6 +8,7 @@ import android.os.Environment
 import android.util.Log
 import androidx.core.content.ContextCompat.startActivity
 import com.rc.voip.Constants
+import com.rc.voip.InstallerActivity
 import io.github.solrudev.simpleinstaller.apksource.UriApkSource
 import io.github.solrudev.simpleinstaller.data.ConfirmationStrategy
 import io.github.solrudev.simpleinstaller.data.SessionOptions
@@ -19,11 +20,11 @@ class DownloadReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action == Constants.ACTION_DOWNLOAD_COMPLETE) {
             Log.d("DownloadReceiver", "onReceive: " + " download complete")
-//            val installerActivity = Intent(context, InstallerActivity::class.java)
-//            installerActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//            context.startActivity(installerActivity)
+            val installerActivity = Intent(context, InstallerActivity::class.java)
+            installerActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(installerActivity)
 
-            val folder =
+            /*val folder =
                 File(context.getExternalFilesDir("").toString() + "/Download/jcupdate")
             Log.d("TAG", "onReceive: downloaded folder =$folder")
             if (!folder.exists()) folder.mkdir()
@@ -38,7 +39,7 @@ class DownloadReceiver : BroadcastReceiver() {
 //                    files[0]
 //                ))
                 }
-            }
+            }*/
         }
     }
 
@@ -68,4 +69,6 @@ class DownloadReceiver : BroadcastReceiver() {
                 })
 
     }
+
+
 }

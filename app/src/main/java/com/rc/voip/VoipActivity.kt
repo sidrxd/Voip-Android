@@ -1,24 +1,17 @@
 package com.rc.voip
 
 import android.app.DownloadManager
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.PackageManager
 import android.media.AudioManager
-import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Environment
+import android.os.*
 import android.telephony.TelephonyManager
 import android.util.Log
 import android.webkit.*
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.navigation.ui.AppBarConfiguration
 import com.github.javiersantos.appupdater.AppUpdaterUtils
 import com.github.javiersantos.appupdater.enums.AppUpdaterError
 import com.github.javiersantos.appupdater.enums.UpdateFrom
@@ -26,21 +19,23 @@ import com.github.javiersantos.appupdater.objects.Update
 import com.rc.voip.databinding.ActivityVoipBinding
 import com.rc.voip.receiver.DownloadReceiver
 import com.rc.voip.receiver.PermissionCheck
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import okhttp3.*
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoSession
-import org.mozilla.geckoview.GeckoSession.MediaDelegate
 import org.mozilla.geckoview.GeckoSession.PermissionDelegate
 import java.io.File
 
 
-class VoipActivity : AppCompatActivity() {
+class VoipActivity : AppCompatActivity(),ServiceConnection {
     companion object {
         const val MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1
        // const val URL = "https://jc400-audio.web.app/?token=af5db706-43d2-405a-9f13-965b86a6f39c"
     }
     private var url :String ?=null
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityVoipBinding
     private var myRequest: PermissionRequest? = null
     private var webView: WebView? = null
@@ -51,15 +46,24 @@ class VoipActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityVoipBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        url = "https://jc400-audio.web.app/?id=${telephonyManager.imei}"
+        binding.xVersion.text = BuildConfig.VERSION_NAME
+        PermissionCheck.readPhoneState(this)
+        try {
+            val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+
+            url = "https://e32proxier8000.theletstream.com/websocket/?imei=${telephonyManager.imei}"
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         setGecko()
         binding.include.xReload.setOnClickListener {
             session?.loadUri(url.toString())
         }
         binding.include.xBtnOpen.setOnClickListener {
-            openInBrowser()
+           // openInBrowser()
         }
+
         startAutoUpdate()
     }
 
@@ -98,29 +102,25 @@ class VoipActivity : AppCompatActivity() {
                 Log.d("Latest Version", update?.latestVersion.toString())
                 Log.d("Latest Version Code", update?.latestVersionCode.toString())
                 Log.d("Release notes", update?.releaseNotes.toString())
-                Toast.makeText(this@VoipActivity, "new update available", Toast.LENGTH_SHORT).show()
 
+                if (update?.latestVersionCode?.toInt()!! > BuildConfig.VERSION_CODE){
+                    val downloadUrl =
+                        update?.urlToDownload.toString() + "/download/${update.latestVersion}/app-release.apk"
+                    var path = Environment.getExternalStorageDirectory().absolutePath;
+                    var folder = File("$path/Download/jcupdate/")
+                    Log.d("dpath", folder.absolutePath)
 
-                val downloadUrl =
-                    update?.urlToDownload.toString() + "/download/1.0.0.0/app-release.apk"
-                val folder = File(
-                    getExternalFilesDir("").toString() + "/Download/jcupdate"
-                )
-                Log.d("URL", downloadUrl)
+                    deleteRecursive(folder)
+                    if (PermissionCheck.readAndWriteExternalStorage(this@VoipActivity)) {
 
-                deleteRecursive(folder)
-                if (PermissionCheck.readAndWriteExternalStorage(this@VoipActivity)) {
-
+                    }
+                    Utils.startDownload(
+                        downloadUrl,
+                        "/jcupdate/",
+                        applicationContext,
+                        "app-release.apk"
+                    )
                 }
-                Utils.startDownload(
-                    downloadUrl,
-                    "jcupdate/",
-                    applicationContext,
-                    "app-release.apk"
-                )
-
-
-                // https://github.com/sidrxd/Voip-Android/releases/download/1.0.0.0/app-release.apk
 
             }
 
@@ -266,13 +266,21 @@ class VoipActivity : AppCompatActivity() {
     }
 
 
-    private fun openInBrowser() {
-        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url.toString()))
-        startActivity(browserIntent)
-    }
 
     override fun onDestroy() {
         super.onDestroy()
         webView?.destroy()
     }
+
+    private var messenger :Messenger ?=null
+    override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+        messenger = Messenger(service)
+    }
+
+    override fun onServiceDisconnected(name: ComponentName?) {
+
+
+    }
+
+
 }

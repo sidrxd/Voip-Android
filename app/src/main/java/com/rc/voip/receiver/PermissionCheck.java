@@ -59,5 +59,15 @@ public class PermissionCheck{
 
     }
 
+    public static boolean readPhoneState(Context context){
+        if(ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.SEND_SMS}, 5);
+            return false;
+        }else{
+            return true;
+        }
+
+    }
+
     //Just like this you can implement rest of the permissions. 
 }
