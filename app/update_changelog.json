@@ -1,6 +1,6 @@
 {
   "latestVersion": "1.0.0.0",
-  "latestVersionCode": "7",
+  "latestVersionCode": "5",
   "url": "https://github.com/sidrxd/Voip-Android/releases",
   "releaseNotes": [
     "- added livekit"
